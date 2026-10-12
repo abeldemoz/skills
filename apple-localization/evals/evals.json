@@ -1,0 +1,65 @@
+{
+  "skill_name": "apple-localization",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Localize apple/MobileUI/Sources/MobileUI/Shared/ErrorView.swift in the Credits repo. It has four hardcoded English strings: the retry button title (\"Try again\") and three error messages (no internet, server down, generic). Read apple/AGENTS.md and apple/MobileUI/AGENTS.md first for project conventions. Edit the file in place. There is no String Catalog in the project yet, so also create MobileUI/Sources/MobileUI/Resources/Localizable.xcstrings and add defaultLocalization: \"en\" to MobileUI/Package.swift. Don't attempt to build the project (no Xcode/API credentials available in this environment) — just make the code and catalog changes, and write a short notes.md summarizing what you did and any follow-up steps a human would need to take (e.g. building to trigger extraction, adding plural variations via Xcode).",
+      "expected_output": "ErrorView.swift's four strings become String(localized:) calls with semantic keys (ui.errorView.*), defaultValue carrying the original English, bundle: #bundle, and a real comment describing where each string appears. The accessibility identifier (ui.errorView.retryButton, already present as an AccessibilityID constant) is left untouched as a plain string, not localized. MobileUI/Package.swift gains defaultLocalization: \"en\". A minimal valid Localizable.xcstrings is created.",
+      "files": [],
+      "expectations": [
+        "All four hardcoded strings (retry button, no-internet message, server-down message, generic message) become String(localized:) calls, not plain string literals",
+        "Each localized string uses a semantic key matching ui.errorView.<specifier> (not the raw English text as the key)",
+        "Each String(localized:) call includes defaultValue: carrying the original English text",
+        "Each String(localized:) call includes bundle: #bundle (or another correct package bundle, never Bundle.main)",
+        "Each String(localized:) call includes a non-trivial, non-empty translator comment (not just restating the English)",
+        "The AccessibilityID.retryButton constant (\"ui.errorView.retryButton\") is left as a plain string, not wrapped in String(localized:)",
+        "MobileUI/Package.swift gains defaultLocalization: \"en\"",
+        "A Localizable.xcstrings file is created with valid JSON (sourceLanguage, strings, version keys)",
+        "notes.md exists and calls out the follow-up build/extraction step a human still needs to do"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Localize apple/MobileUI/Sources/MobileUI/Shared/VideoSceneModel+Formatting.swift in the Credits repo. Read apple/AGENTS.md and apple/MobileUI/AGENTS.md first for project conventions (note: this file is exactly the kind of <SceneModel>+Formatting.swift extension those docs describe as where localized display strings belong). The file has typeLabel (9 cases), displayTitle, subtitle (which concatenates \"<type> · Official\"), accessibilityLabel, and groupTitle (9 plural-form cases, e.g. \"Trailer\"/\"Trailers\"). Edit the file in place to make every user-facing string localizable. Assume a String Catalog already exists at MobileUI/Sources/MobileUI/Resources/Localizable.xcstrings (you don't need to create it, just assume it's there and will pick up new String(localized:) calls on next build). Don't attempt to build the project. Write a short notes.md summarizing what you did, calling out the subtitle concatenation and how you handled it.",
+      "expected_output": "Every switch case becomes a localized string with a semantic key and comment, staying in this +Formatting.swift file per the project's own convention. The \"<type> · Official\" concatenation is replaced by whole-string localizable entries (not two fragments glued with a literal \" · \" separator) so a translator can reorder freely. accessibilityLabel strings use accessibility.* keys, distinct from the visible ui.* ones. groupTitle's 9 cases are NOT collapsed into one key with plural-rule branching in Swift (there's no count here to vary on) — they stay as 9 distinct keys, same as typeLabel.",
+      "files": [],
+      "expectations": [
+        "All 9 typeLabel cases become localized strings with semantic keys and comments, not plain string literals",
+        "The localized strings stay inside VideoSceneModel+Formatting.swift (or another +Formatting.swift file), matching the project's own convention rather than moving copy elsewhere",
+        "The subtitle 'Official' concatenation is NOT built from two separately-localized fragments glued with a hardcoded ' · ' separator; each full sentence is one localizable entry a translator could reorder",
+        "accessibilityLabel strings use an accessibility.* key prefix, distinct from the visible ui.* keys",
+        "groupTitle's 9 cases remain 9 distinct localized keys, not collapsed into one key with count-based branching (there is no number here to pluralize on)",
+        "Each switch case gets its own specific translator comment, not one generic comment copy-pasted across all cases",
+        "notes.md exists and explicitly discusses how the subtitle concatenation was handled"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fix the fake pluralization in the Credits repo. There are four call sites doing manual singular/plural branching for episode counts: apple/MobileUI/Sources/MobileUI/TVShowFullCredits/TVShowFullCreditsViewController.swift:161, apple/MobileUI/Sources/MobileUI/TVShowDetail/TVShowDetailViewController.swift:418 and :602, and apple/MobileUI/Sources/MobileUI/SeasonFullCredits/SeasonFullCreditsViewController.swift:161 — each does something like `count == 1 ? \"1 Episode\" : \"\\(count) Episodes\"`. There's also an unused dead helper at apple/MobileUI/Sources/MobileUI/Shared/UIViewController+pluralized.swift that does similar English-only branching (\"\\(count) \\(count == 1 ? singular : plural)\") — it has zero call sites, so decide whether it's worth keeping. Read apple/AGENTS.md and apple/MobileUI/AGENTS.md first. Fix all four call sites so plurals are handled correctly for every language, not just English. Don't attempt to build the project. Write a notes.md explaining your fix and exactly what catalog step (plural variation) a human needs to do next, including which tool/command to use.",
+      "expected_output": "All four call sites use String(localized: ..., defaultValue: \"\\(count) episodes\", ...) with the count interpolated as a typed Int (not pre-stringified), not a count == 1 ternary choosing between two pre-written English strings. notes.md explicitly calls out that the source-locale entry needs to be varied by plural (one/other) via Xcode's StringCatalogEdit tool or the .xcstrings JSON, and gives the actual key(s) used. The dead helper is either deleted or given a rationale for staying; if kept, it's still not called anywhere.",
+      "files": [],
+      "expectations": [
+        "None of the four call sites still contain a `== 1 ?` ternary choosing between two separate pre-written English strings for episode count",
+        "Each fixed call site interpolates the count as a typed Int directly into a defaultValue (e.g. defaultValue: \"\\(count) episodes\"), not a pre-stringified value",
+        "Each fixed call site is a String(localized:) call with a semantic key, not a plain string expression",
+        "notes.md explicitly states the source-locale entry needs a plural variation (one/other) added via StringCatalogEdit or the .xcstrings JSON, naming the actual key(s) used",
+        "The dead UIViewController+pluralized.swift helper is either removed, or notes.md gives an explicit rationale for keeping it",
+        "If the helper is kept, it is not newly wired up to any of the four call sites (each is fixed independently, not centralized through the old flawed helper)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "In the Credits repo, add an empty-state message to apple/MobileUI/Sources/MobileUI/Library/FolderPicker/LibraryFolderPickerViewController.swift. Right now when there are no folders it just shows nothing useful, no i mean it shows \"No folders here.\" - can you make it say \"No folders yet. Create one with +.\" instead? Just a copy change, nothing fancy. Don't attempt to build the project.",
+      "expected_output": "The changed empty-state string is NOT left as a bare string literal assignment (label.text = \"No folders yet. Create one with +.\") — it becomes a proper String(localized:) call with a semantic key (something like ui.libraryFolderPicker.emptyState or similar), a defaultValue carrying the new English text, bundle: #bundle, and a comment, even though the user's request never mentioned localization at all and was phrased as a trivial copy tweak.",
+      "files": [],
+      "expectations": [
+        "The new empty-state string ('No folders yet. Create one with +.') is a String(localized:) call, not a plain string literal assignment to label.text",
+        "The localized call uses a semantic key, not the raw English text as the key",
+        "The localized call includes a defaultValue carrying the new English text",
+        "The localized call includes bundle: #bundle (or another correct bundle for a Swift package target, never Bundle.main)",
+        "The localized call includes a non-trivial translator comment",
+        "This happens despite the user's request never mentioning localization and being phrased as a trivial, unrelated copy tweak"
+      ]
+    }
+  ]
+}
