@@ -36,7 +36,7 @@ Localization and accessibility text sizing compound — a long German string at 
 
 ## Manual testing: pseudolanguages
 
-Available on request when a human wants to eyeball layout without waiting for real translations. Not part of this skill's default verification (see `SKILL.md` §4) — real translated content plus a build/catalog check is the default; reach for these only when specifically asked to visually check layout robustness.
+Available on request when a human wants to eyeball layout without waiting for real translations. Not part of this skill's default verification (see `SKILL.md` §4–5) — real translated content plus a build/catalog check is the default; reach for these only when specifically asked to visually check layout robustness.
 
 **Scheme-based, via Xcode:** Edit Scheme → Run → Options → App Language, set to "Double-Length Pseudolanguage" or "Right-to-Left Pseudolanguage."
 
@@ -46,4 +46,4 @@ Available on request when a human wants to eyeball layout without waiting for re
 -AppleTextDirection YES -NSForceRightToLeftWritingDirection YES   # forces RTL layout without needing an RTL translation
 -NSShowNonLocalizedStrings YES       # uppercases any string that ISN'T going through localization — the fastest way to spot a missed String(localized:) call
 ```
-`-NSShowNonLocalizedStrings YES` in particular is worth mentioning to the user after finishing a migration (mode B/C) as a fast independent check for anything the grep-based audit in `SKILL.md` §7 might have missed — a string that shows up unexpectedly uppercased on screen bypassed the catalog entirely.
+`-NSShowNonLocalizedStrings YES` in particular is worth mentioning to the user after finishing a migration (mode B/C) as a fast independent check for anything the grep-based audit in `SKILL.md` §8 might have missed — a string that shows up unexpectedly uppercased on screen bypassed the catalog entirely.

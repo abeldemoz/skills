@@ -1,6 +1,6 @@
 # Handing off to Xcode's bundled translation skills
 
-**Precondition:** everything in scope is already extracted into a String Catalog with real keys, `defaultValue`s, and comments (mode B or C from `SKILL.md` has already run on this scope). Apple's translation tooling can only translate what's already in a catalog — it does not read raw Swift source looking for hardcoded strings. If you're not sure the scope is ready, run an inventory (`SKILL.md` §6) before going further.
+**Precondition:** everything in scope already has a source entry in a String Catalog — a real key, the English value, and a comment (mode A, B or C from `SKILL.md` has already run on this scope). Apple's translation tooling can only translate what's already in a catalog — it does not read raw Swift source looking for hardcoded strings. If you're not sure the scope is ready, run an inventory (`SKILL.md` §7) before going further.
 
 ## Why this exists as a separate step
 
@@ -47,6 +47,18 @@ Gotchas:
 - Call `LocalizationPlanner` once per target locale before translating. A locale listed in `knownRegions` isn't registered with the catalog tools until you do.
 - `LocalizationPlanner` can create empty `InfoPlist.xcstrings` and `mul.lproj/LaunchScreen.xcstrings` files. Delete them if they're out of scope.
 - `StringCatalogEdit` saves `machine_translated`, not `translated`. When verifying, check the `machine_translated` state.
+
+## Scoped run for new copy (mode A)
+
+When you've just added a few keys to a catalog that already carries other locales, skip whole-project planning and translate only what's new:
+
+1. **Find the locales** the catalog already has — read them from the catalog JSON (or `CFBundleLocalizations`). Those are the targets; don't add languages the project doesn't ship.
+2. **Call `LocalizationPlanner` once per target locale** so the locale is registered with the catalog tools.
+3. **Read `translation/SKILL.md.packaged` once**, then translate the new keys — and only those — into each locale, following its instructions and the locale's style guide. For a handful of keys, doing this yourself locale by locale is fine; if the key or locale count makes that impractical, delegate per the coordinator's limits (≤15 keys per batch, ≤5 sub-agents at once, each told to read the packaged `translation` skill by absolute path).
+4. **Get the do-not-translate list and app-name policy from the project's `AGENTS.md`** (a rule like "never translate brand names" is common) before asking the user; ask only if the project doesn't record them.
+5. **Verify** with `mcp__xcode__StringCatalogRead` for each locale that every new key left the `new` state.
+
+Keep the new keys' English entries and comments exactly as authored — translators and the tools both read the comment.
 
 ## Before starting: two things to get from the user
 
