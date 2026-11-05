@@ -1,13 +1,15 @@
 ---
 name: apple-localization
-description: Make Swift/UIKit/SwiftUI code localizable (i18n) for iOS, iPadOS, macOS, watchOS and visionOS apps — turning hardcoded strings into String Catalog entries with keys, comments, real plurals and locale-safe formatting, then handing off to Xcode's own translation tools. Use this whenever the user says localize, localise, internationalize, i18n, l10n, "add a language", "translate the app", or asks to audit an app for localization issues. Also apply it proactively, without being asked, any time you write or edit user-facing text in Swift UI code (labels, buttons, alerts, accessibility labels, empty states, Info.plist prompts) — new copy should be born localizable, not added to the backlog.
+description: Make Swift/UIKit/SwiftUI code localizable (i18n) for iOS, iPadOS, macOS, watchOS and visionOS apps — turning hardcoded strings into String Catalog entries with keys, comments, real plurals and locale-safe formatting. Writes only the source language; not for translating into other languages. Use this whenever the user says localize, localise, internationalize, i18n, l10n, or asks to audit an app for localization issues. Also apply it proactively, without being asked, any time you write or edit user-facing text in Swift UI code (labels, buttons, alerts, accessibility labels, empty states, Info.plist prompts) — new copy should be born localizable, not added to the backlog.
 ---
 
 # Apple platform localization
 
-Localizing an app is two separate jobs. **Internationalization (i18n)** is making code *capable* of showing translated text — extracting strings into a catalog, giving them stable keys and comments, fixing plurals and concatenation, using formatters instead of hand-built strings. **Translation (l10n)** is writing the actual German, Japanese, Arabic, etc. Xcode 27+ already ships purpose-built skills for the second job (`translation-coordinator`, `translation` — see the very last section). This skill exists because nothing else covers the first job, and the second job is worthless without it: Xcode can only translate strings that have already been pulled into a catalog, and a catalog only has what code extraction found.
+Localizing an app is two separate jobs. **Internationalization (i18n)** is making code *capable* of showing translated text — extracting strings into a catalog, giving them stable keys and comments, fixing plurals and concatenation, using formatters instead of hand-built strings. **Translation (l10n)** is writing the actual German, Japanese, Arabic, etc. This skill does only the first job.
 
-So this skill's job, in order: **find hardcoded/fragile strings → make them localizable → verify the catalog picked them up → hand off to translation.**
+**Hard rule: this skill writes only the source-language value of each catalog entry. It never adds a language, writes a translation, or edits or removes another locale's values.** If a request also asks for translation ("localize into German", "add French"), do the source-side work, then say plainly that translation is out of scope.
+
+So this skill's job, in order: **find hardcoded/fragile strings → make them localizable → verify the catalog picked them up.**
 
 ## 0. Orient before touching anything
 
@@ -35,7 +37,6 @@ If the project has an established pattern (a key grammar, a helper function, a p
 - **(B) "Localize `<file/screen/package>`."** Migrate that scope: every hardcoded string in it becomes a real catalog entry. See §2–5.
 - **(C) "Localize the app" / a whole codebase with no existing localization.** Don't do this in one pass — see §6.
 - **(D) "Audit for localization issues."** Report only, no edits — see §7.
-- **(E) "Add a language" / "translate to X."** This is translation, not internationalization. Confirm the target strings are already extracted (mode B/C first if not), then read `references/translation-handoff.md` and follow it — don't attempt this yourself with locale knowledge you're guessing at.
 
 ## 2. The rules for every string
 
@@ -88,7 +89,7 @@ This keeps call sites short and keeps a screen's copy in one scannable place, wi
 These come straight from Apple's own localization guidance (WWDC21 "Streamline your localized strings", WWDC22 "Build global apps"). Each one looks harmless in English and breaks in at least one shipping language. Full before/after examples: `references/patterns.md`.
 
 - **Concatenation.** `"\(typeLabel) · Official"` assumes English word order and an English separator. Write the whole sentence as one localizable string with the pieces interpolated in, so a translator can reorder them.
-- **Fake plurals.** `count == 1 ? "1 Episode" : "\(count) Episodes"` is wrong in every language with more than two plural forms (Russian has four; Arabic has six) and is invisible to Xcode's tooling, so it never gets fixed. Interpolate the count into one `defaultValue` and vary the *catalog* entry by plural (§5) — never branch in Swift.
+- **Fake plurals.** `count == 1 ? "1 Episode" : "\(count) Episodes"` is wrong in every language with more than two plural forms (Russian has four; Arabic has six) and is invisible to Xcode's tooling, so it never gets fixed. Interpolate the count into one `defaultValue` and vary the *catalog* entry by plural (§4) — never branch in Swift.
 - **`String(format:)` and hand-rolled formatting.** Loses locale-aware digit systems, RTL isolation, and grouping. Use `String(localized:)` for text and Foundation's `.formatted()` for numbers, dates, currency, lists, and durations — see `references/patterns.md` for the formatter reference.
 - **One string glued from a verb and a variable that changes grammar.** `"Show weather in \(location)"` reads fine for a city but wrong for "My Location" in languages where the preposition depends on what follows. When two call sites feed genuinely different grammar into the same template, split them into two full strings.
 - **Count-dependent phrasing with no number in it.** `"Remove this city"` vs `"Remove these cities"` isn't a plural-rules problem (there's no `%lld` to vary on) — it's just two different strings, chosen in code by the count.
@@ -100,7 +101,7 @@ Editing Swift is half the job — the String Catalog has to actually pick the st
 
 1. Build so Xcode's extractor discovers new/changed keys (`mcp__xcode__BuildProject`, or the project's own build command from its `AGENTS.md`).
 2. If a string needs plural or device variation, add that to the **source locale** — `mcp__xcode__StringCatalogEdit` with `targetLocaleIdentifier` set to the source language, or hand-edit the `.xcstrings` JSON if Xcode's MCP isn't available (tell the user to close that catalog in Xcode first so it doesn't clobber the edit).
-3. Re-check with `mcp__xcode__StringCatalogRead`/`StringCatalogContext` (or by opening the JSON) that the key exists with the right default value, comment, and variation — and that nothing you removed is left behind as a stale, orphaned entry.
+3. Re-check with `mcp__xcode__StringCatalogRead`/`StringCatalogContext` (or by opening the JSON) that the key exists with the right default value, comment, and variation — and that keys you removed are deleted from the catalog too, unless another locale has a value for them. Leave those in place and name them in your summary.
 
 ## 5. Layout, RTL, and Dynamic Type
 
@@ -128,7 +129,3 @@ grep -rnE '== 1 \? "|count == 1' --include='*.swift' .
 grep -rnE 'String\(format:' --include='*.swift' .
 ```
 Present findings grouped by file/feature with a one-line description of each hazard type present (see §3) — no fix, no catalog changes.
-
-## 8. Handing off to translation (mode E)
-
-Xcode 27+ bundles two skills purpose-built for this — `translation-coordinator` (plans the work, splits it into batches, delegates) and `translation` (translates one batch, reading source, comments, similar strings, and a locale style guide before writing anything). They are not registered as Claude Code skills, but their instructions and the MCP tools they drive (`LocalizationPlanner`, `StringCatalogRead`, `StringCatalogContext`, `StringCatalogEdit`) are available. Read `references/translation-handoff.md` for exactly how to locate and follow them from here — don't improvise a translation workflow when Apple has already shipped one with 58 locale style guides behind it.

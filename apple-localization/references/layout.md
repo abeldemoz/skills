@@ -36,7 +36,7 @@ Localization and accessibility text sizing compound — a long German string at 
 
 ## Manual testing: pseudolanguages
 
-Available on request when a human wants to eyeball layout without waiting for real translations. Not part of this skill's default verification (see `SKILL.md` §4) — real translated content plus a build/catalog check is the default; reach for these only when specifically asked to visually check layout robustness.
+Available on request when a human wants to eyeball layout without waiting for real translations. Not part of this skill's default verification (see `SKILL.md` §4) — a build and catalog check is the default; reach for these only when specifically asked to visually check layout robustness.
 
 **Scheme-based, via Xcode:** Edit Scheme → Run → Options → App Language, set to "Double-Length Pseudolanguage" or "Right-to-Left Pseudolanguage."
 

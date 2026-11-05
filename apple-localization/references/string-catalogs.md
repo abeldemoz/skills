@@ -46,7 +46,7 @@ Each key × locale pair carries one of these states, visible in Xcode's catalog 
 | **Stale** | The key no longer appears anywhere in code | A build ran and the extractor didn't find this key this time |
 | *(manually managed)* | Exempted from automatic add/update/remove | Set explicitly for keys built dynamically (e.g. a runtime-constructed key) that the compiler can't see statically |
 
-**On stale keys:** if a key you're removing had translations, don't just delete the Swift call and walk away — the catalog now has an orphaned stale entry. Either delete it from the catalog too (it's dead weight and can confuse a future audit) or, if you expect the string to come back, leave it and note why in your summary to the user.
+**On stale keys:** if you remove a Swift call, don't walk away — the catalog now has an orphaned stale entry. If the key holds only the source-language value, delete it from the catalog too (it's dead weight and can confuse a future audit). If any other locale has a value for it, leave the key in place — deleting it would destroy someone else's translation — and name it in your summary so a human decides.
 
 ## Plural and device variation (source locale)
 
@@ -66,7 +66,7 @@ A key with a numeric placeholder needs its **source-locale** entry varied by plu
   }
 }
 ```
-English only needs `one`/`other`. Don't guess at other languages' plural case sets (Arabic needs six: zero/one/two/few/many/other) — that's the `translation` skill's job once this key reaches it (see `references/translation-handoff.md`), and it has the tooling to ask the catalog what cases a target locale needs.
+English only needs `one`/`other`. Don't write plural cases for any other language (Arabic needs six: zero/one/two/few/many/other) — those are filled in when the key is translated, which is outside this skill. Leave other locales alone.
 
 **Fallback: direct JSON edit**, only if the Xcode MCP tools aren't available. **Tell the user to close that catalog in Xcode first** — Xcode holds its own in-memory copy while a catalog is open in the editor and can overwrite a concurrent on-disk edit when it next saves. The shape inside `"strings"."<key>"."localizations"."<locale>"`:
 ```json
@@ -103,13 +103,3 @@ The app name (`CFBundleDisplayName`) and permission-usage strings (camera, locat
 ## Migrating existing `.strings`/`.stringsdict`
 
 If a project (or an imported dependency) still has legacy files: right-click the `.strings`/`.stringsdict` in Xcode → "Migrate to String Catalog." This preserves every existing translation and plural rule — it's a lossless format conversion, not a retranslation — and can be done incrementally, one table/target at a time, while both formats coexist elsewhere in the project.
-
-## Export/import for translators without Xcode's bundled skills
-
-If neither `translation-coordinator`/`translation` nor a human translator with Xcode access is available, fall back to the raw XLIFF workflow:
-```bash
-xcodebuild -exportLocalizations -workspace App.xcworkspace -localizationPath ~/Desktop -exportLanguage de
-# ... send the resulting de.xcloc to a translator ...
-xcodebuild -importLocalizations -workspace App.xcworkspace -localizationPath ~/Desktop/de.xcloc
-```
-`references/translation-handoff.md` covers when to prefer this over the bundled skills (mainly: no Xcode 27+ available, or the user specifically wants a human translator in the loop).

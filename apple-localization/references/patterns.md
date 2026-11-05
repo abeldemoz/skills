@@ -143,4 +143,4 @@ For simple singular/plural agreement in the languages that support it, Foundatio
 ```swift
 String(localized: "\(amount) in last ^[\(hours) hour](inflect: true)")
 ```
-This is a narrower tool than catalog plural variation — it only covers automatic grammatical agreement in supported languages, and translators see the `^[...]()` markup inline rather than clean prose. Default to catalog plural variation (§4/§5 of `SKILL.md`); reach for this only when a project has already adopted it or when the string is simple enough that the markup overhead is clearly worth it.
+This is a narrower tool than catalog plural variation — it only covers automatic grammatical agreement in supported languages, and translators see the `^[...]()` markup inline rather than clean prose. Default to catalog plural variation (§4 of `SKILL.md`); reach for this only when a project has already adopted it or when the string is simple enough that the markup overhead is clearly worth it.

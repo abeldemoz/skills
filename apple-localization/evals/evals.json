@@ -60,6 +60,20 @@
         "The localized call includes a non-trivial translator comment",
         "This happens despite the user's request never mentioning localization and being phrased as a trivial, unrelated copy tweak"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Localize apple/MobileUI/Sources/MobileUI/Shared/ErrorView.swift in the Credits repo into German and French. Read apple/AGENTS.md and apple/MobileUI/AGENTS.md first for project conventions. Edit the file in place. There is no String Catalog in the project yet. Don't attempt to build the project. Write a short notes.md summarizing what you did.",
+      "expected_output": "The same source-side extraction as eval 1: ErrorView.swift's four strings become String(localized:) calls with semantic ui.errorView.* keys, defaultValue, bundle: #bundle and real comments, and a source-language catalog is set up. Nothing is translated: no German or French text appears anywhere, no languages are added to the project, and notes.md says translating into German and French is out of scope.",
+      "files": [],
+      "expectations": [
+        "All four hardcoded strings become String(localized:) calls with semantic ui.errorView.* keys, defaultValue carrying the original English, a correct bundle (never Bundle.main) and a non-trivial translator comment",
+        "Any .xcstrings file created or edited contains only the source (en) locale, with no de or fr localizations",
+        "No German or French text appears in any Swift file or in the catalog",
+        "No language is added to the project: no de or fr in knownRegions, no de.lproj or fr.lproj directories, no LocalizationPlanner call",
+        "Xcode's bundled translation-coordinator and translation skill files are not read or followed",
+        "notes.md says translating into German and French is out of scope and that those locales were left untouched"
+      ]
     }
   ]
 }
